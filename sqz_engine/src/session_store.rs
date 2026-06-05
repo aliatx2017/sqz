@@ -983,6 +983,7 @@ impl SessionStore {
     /// Return all sessions ordered by most recently updated, limited to `limit`.
     pub fn list_sessions(&self, limit: u32) -> Result<Vec<SessionSummary>> {
         let mut stmt = self
+            .db
             .prepare(
                 "SELECT id, project_dir, compressed_summary, created_at, updated_at \
              FROM sessions ORDER BY updated_at DESC LIMIT ?1",
