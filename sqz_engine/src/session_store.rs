@@ -930,6 +930,47 @@ impl SessionStore {
         ).map_err(SqzError::SessionStore)
     }
 
+    /// Increment the cache-hit counter (persisted in metadata).
+    pub fn record_cache_hit(&self) -> Result<()> {
+        let count: u64 = self.db.query_row(
+            "SELECT value FROM metadata WHERE key = 'cache_hits'", [],
+            |row| row.get::<_, String>(0).map(|s| s.parse::<u64>().unwrap_or(0)),
+        ).unwrap_or(0);
+        let new = count + 1;
+        self.db.execute(
+            "INSERT OR REPLACE INTO metadata (key, value) VALUES ('cache_hits', ?1)",
+            params![new.to_string()],
+        )?;
+        Ok(())
+    }
+
+    /// Increment the cache-miss counter (persisted in metadata).
+    pub fn record_cache_miss(&self) -> Result<()> {
+        let count: u64 = self.db.query_row(
+            "SELECT value FROM metadata WHERE key = 'cache_misses'", [],
+            |row| row.get::<_, String>(0).map(|s| s.parse::<u64>().unwrap_or(0)),
+        ).unwrap_or(0);
+        let new = count + 1;
+        self.db.execute(
+            "INSERT OR REPLACE INTO metadata (key, value) VALUES ('cache_misses', ?1)",
+            params![new.to_string()],
+        )?;
+        Ok(())
+    }
+
+    /// Return (cache_hits, cache_misses) from metadata counters.
+    pub fn cache_hit_miss_counts(&self) -> Result<(u64, u64)> {
+        let hits: u64 = self.db.query_row(
+            "SELECT value FROM metadata WHERE key = 'cache_hits'", [],
+            |row| row.get::<_, String>(0).map(|s| s.parse::<u64>().unwrap_or(0)),
+        ).unwrap_or(0);
+        let misses: u64 = self.db.query_row(
+            "SELECT value FROM metadata WHERE key = 'cache_misses'", [],
+            |row| row.get::<_, String>(0).map(|s| s.parse::<u64>().unwrap_or(0)),
+        ).unwrap_or(0);
+        Ok((hits, misses))
+    }
+
     /// Clear the dedup cache. After this, all future reads will be treated
     /// as cache misses and compressed fresh. Does NOT clear compression
     /// stats or session history.
