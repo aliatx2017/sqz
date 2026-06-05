@@ -922,6 +922,14 @@ impl SessionStore {
         Ok(())
     }
 
+    /// Number of entries currently in the dedup cache.
+    pub fn cache_entry_count(&self) -> Result<u64> {
+        self.db.query_row(
+            "SELECT COUNT(*) FROM cache_entries", [],
+            |row| row.get(0),
+        ).map_err(SqzError::SessionStore)
+    }
+
     /// Clear the dedup cache. After this, all future reads will be treated
     /// as cache misses and compressed fresh. Does NOT clear compression
     /// stats or session history.
