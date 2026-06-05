@@ -1111,11 +1111,14 @@ fn cmd_dashboard(port: u16) {
                     }
                 }
                 // Cache entries count.
-                if let Ok(count) = store.cache_entry_count() {
-                    if let Ok(mut m) = metrics_handle.lock() {
-                        m.cache_hits = count;
-                    }
-                }
+                // NOTE: cache_misses not tracked yet — populating cache_hits
+                // without misses produces fake 100% hit rate. Keep query ready
+                // but disabled until upstream adds miss counter.
+                // if let Ok(count) = store.cache_entry_count() {
+                //     if let Ok(mut m) = metrics_handle.lock() {
+                //         m.cache_hits = count;
+                //     }
+                // }
                 // Per-tool breakdown (from stages_applied).
                 if let Ok(tools) = store.per_tool_breakdown() {
                     if let Ok(mut m) = metrics_handle.lock() {
